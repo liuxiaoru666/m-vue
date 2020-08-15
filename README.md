@@ -3,5 +3,7 @@
 
 [入口代码分析](https://juejin.im/post/6861108316685713416/)
 
+[$mount的实现](https://juejin.im/post/6861190719768526856/)
+
  [响应式原理](https://juejin.im/post/6861097998705917965/)
 
