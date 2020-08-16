@@ -1,4 +1,4 @@
-// import Observer from './observer/observer';
+//指令处理类
 const compileUtile = {
     getVal(expr,vm){
         //reduce用的好啊
@@ -14,14 +14,23 @@ const compileUtile = {
         },vm.$data)
     },
     text(node,expr,vm){
-        const value = this.getVal(expr,vm)
+        new Watcher(vm,expr,(newVal)=>{
+            this.updater.textUpdate(node,newVal);
+        })
+        const value = this.getVal(expr,vm);
         this.updater.textUpdate(node,value);
     },
     html(node,expr,vm){
+        new Watcher(vm,expr,(newVal)=>{
+            this.updater.htmlUpdate(node,newVal);
+        })
         const value = this.getVal(expr,vm);
         this.updater.htmlUpdate(node,value);
     },
     model(node,expr,vm){
+        new Watcher(vm,expr,(newVal)=>{
+            this.updater.modelUpdate(node,newVal);
+        })
         const value = this.getVal(expr,vm);
         this.updater.modelUpdate(node,value);
     },
@@ -45,7 +54,7 @@ const compileUtile = {
         }
     }
 }
-
+//Compile指令解析器
 class Compile{
     constructor(el,vm){
        this.el =  this.isElementNode(el)?el:document.querySelector(el);
@@ -130,11 +139,12 @@ class mVue{
         this.$el = options.el;
         this.$data = options.data;
         if(this.$el){
+            
             //1.实现观察者observer
+            new Observer(this.$data);
             //2.实现指令解析器
             new Compile(this.$el,this);
         }
-        //创建观察者，对数据劫持、监听
-        // new Observer(this.$data);
+       
     }
 }
