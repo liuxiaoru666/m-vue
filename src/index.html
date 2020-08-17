@@ -7,10 +7,10 @@
 </head>
 <body>
     <div id="app">
-        <p v-text='msg'></p>
+        <p v-text='workInfo.location'></p>
         <p v-html='html'></p>
-        <p>{{workInfo.location}}</p>
-        <input type="text" v-model='model'>
+        <p>{{workInfo.location}}--{{workInfo.profession}}</p>
+        <input type="text" v-model='workInfo.profession'>
         <button @click='handleClick'>事件绑定</button>
     </div>
     <script src='./mVue.js'></script>
@@ -32,7 +32,7 @@
         },
         methods:{
             handleClick(){
-                console.log(this)
+                this.workInfo.location= 'hello'
             }
         }
     })

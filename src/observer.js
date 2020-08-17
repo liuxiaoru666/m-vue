@@ -32,7 +32,6 @@ class Dep {
         this.subs.push(watcher)
     }
     notify(){
-        console.log(this.subs)
         this.subs.forEach((watcher)=>{
             // 通知订阅者
             watcher.update()
@@ -56,10 +55,11 @@ class Observer{
         this.observe(value);
         //创建订阅者收集器
         const dep = new Dep();
+        //劫持监听所有的属性
         Object.defineProperty(obj,key,{
             enumerable:true,
             configurable:false,
-            get:()=>{
+            get:()=>{//初始化时，编译之前，已经触发get
                 //依赖收集，往Dep中添加订阅者
                 Dep.target&&dep.addSub(Dep.target);
                 return value;

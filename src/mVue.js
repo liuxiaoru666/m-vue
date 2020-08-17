@@ -2,22 +2,48 @@
 const compileUtile = {
     getVal(expr,vm){
         //reduce用的好啊
-        const reg = /\{\{(.+?)\}\}/g;
-        //处理双大括号
-        if(reg.test(expr)){
-            expr = expr.replace(reg,(...args)=>{
-                return args[1]
-            });
-        }
         return expr.split('.').reduce((data,curentval)=>{
             return data[curentval];
         },vm.$data)
     },
-    text(node,expr,vm){
-        new Watcher(vm,expr,(newVal)=>{
-            this.updater.textUpdate(node,newVal);
+    setval(expr,vm,newVal){
+        const length = expr.split('.').length;
+        let i=0;
+        return expr.split('.').reduce((data,curentval)=>{
+            if(i===length-1){//到最后一个才赋值，如果先赋值了就找不到下一级了
+                data[curentval] = newVal
+            }
+            i++;
+            return data[curentval]
+        },vm.$data)
+    },
+    getContentVal(expr,vm){
+        const reg = /\{\{(.+?)\}\}/g;
+        return expr.replace(reg,(...args)=>{
+            return this.getVal(args[1],vm);
         })
-        const value = this.getVal(expr,vm);
+    },
+    text(node,expr,vm){
+        let value;
+        const reg = /\{\{(.+?)\}\}/g;
+        //处理双大括号
+        if(reg.test(expr)){
+
+           value = expr.replace(reg,(...args)=>{
+               //绑定观察者，未来数据更新，触发这里的回调函数，更新视图
+            new Watcher(vm,args[1],(newVal)=>{
+                this.updater.textUpdate(node,this.getContentVal(expr,vm));
+            })
+                return this.getVal(args[1],vm)
+            });
+        }else{
+            new Watcher(vm,expr,(newVal)=>{
+                this.updater.textUpdate(node,newVal);
+            })
+            value = this.getVal(expr,vm);
+        }
+        
+      
         this.updater.textUpdate(node,value);
     },
     html(node,expr,vm){
@@ -27,12 +53,19 @@ const compileUtile = {
         const value = this.getVal(expr,vm);
         this.updater.htmlUpdate(node,value);
     },
-    model(node,expr,vm){
+    model(node,expr,vm){//双向绑定
+        //绑定更新函数
         new Watcher(vm,expr,(newVal)=>{
             this.updater.modelUpdate(node,newVal);
         })
+        //数据驱动视图
         const value = this.getVal(expr,vm);
         this.updater.modelUpdate(node,value);
+        //视图驱动数据
+        node.addEventListener('input',(e)=>{
+            //设置值
+            this.setval(expr,vm,e.target.value)
+        })
     },
     on(node,expr,vm,event){
         let fn = vm.$options.methods&&vm.$options.methods[expr];
@@ -131,6 +164,7 @@ class Compile{
     }
 }
 
+
 // import s from './observer/compile'
 class mVue{
     constructor(options){
@@ -144,7 +178,21 @@ class mVue{
             new Observer(this.$data);
             //2.实现指令解析器
             new Compile(this.$el,this);
+            //3、实现代理
+            this.proxyData();
         }
        
+    }
+    proxyData(){
+        Object.keys(this.$data).forEach((key)=>{
+            Object.defineProperty(this,key,{
+                get:()=>{
+                    return this.$data[key]
+                },set(newVal){
+                    this.$data[key] = newVal;
+                }
+            })
+        })
+     
     }
 }
